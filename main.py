@@ -113,8 +113,8 @@ def createcsv():
         answers = jsonObj['answers']
         df = pd.DataFrame.from_dict(answers)
         
-        #path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/test_images/Answers/'
-        path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/images/Exp2/Correct-Answers-Experiment-2/'
+        #path = '/Answers/'
+        path = '/images/Exp2/Correct-Answers-Experiment-2/'
         df.to_csv(path+fileName+'.csv',sep=',')
         
         #df.to_csv("data.csv")
@@ -197,7 +197,7 @@ def createHumidityJson(data):
     
     #return json.dumps(dictionary)
     df = pd.DataFrame.from_dict(dictionary)
-    path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/Experiment/static/data/cleanedJsonData/'
+    path = '/static/data/cleanedJsonData/'
     return df.to_json(path+'PhoenixHumidity.json')
         
 def createUberPickupsJson(data):
@@ -221,7 +221,7 @@ def createUberPickupsJson(data):
 
     return json.dumps(dictionary)
     #df = pd.DataFrame.from_dict(dictionary)
-    #path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/Code/static/data/cleanedCsvData/'
+    #path = '/static/data/cleanedCsvData/'
     #return df.to_json(path+'NYCUberPickups.json')
 
 def createNYCTrafficFlowJson(data):
@@ -248,7 +248,7 @@ def createNYCTrafficFlowJson(data):
 
     return json.dumps(dictionary)
     #df = pd.DataFrame.from_dict(dictionary)
-    #path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/Code/static/data/cleanedCsvData/'
+    #path = '/static/data/cleanedCsvData/'
     #return df.to_json(path+'NYCTrafficFlow.json')
 
 def createAmericanEnergyJson(data):
@@ -273,7 +273,7 @@ def createAmericanEnergyJson(data):
 
     #return json.dumps(dictionary)
     df = pd.DataFrame.from_dict(dictionary)
-    path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/Experiment/static/data/cleanedJsonData/'
+    path = '/static/data/cleanedJsonData/'
     return df.to_json(path+'AmericanEnergy.json')
 
 '''These functions have been implemented and do work, 
@@ -416,7 +416,7 @@ if __name__ == '__main__':
     
     start = time.time()
 
-    path = '/Users/home/Documents/Work/Projects/6 - Radial Visualization/Experiment/static/data/cleanedJsonData/'
+    path = '/static/data/cleanedJsonData/'
 
     #read pre-created json files with help from the read(name) function..They do take time.. 
     with open(path+'AmericanEnergy.json') as f: 
