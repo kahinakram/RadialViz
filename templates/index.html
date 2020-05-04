@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{%block content%}
+
+<br>
+<style>
+canvas {
+    border: 1px solid gray;
+}
+</style>
+<div class="container-fluid">
+    <div class="jumbotron">
+        <h1 class="display-4">Hello, Radial!</h1>
+        <p class="lead">This application is build for investigating Radial Visualization charts</p>
+        <hr class="my-4">
+        <p>...and some more text goes here</p>
+        <a class="btn btn-info btn-lg" href="#" role="button">High Five!</a>
+    </div>
+
+
+<div class="container-fluid">
+    <div id="htmlEmbed"></div>
+</div>
+<script>
+    
+    var margin = { top: 10, right: 10, bottom: 10, left: 10 },
+        width = (document.getElementById("htmlEmbed").offsetWidth) - margin.right,
+        height = 1000 - margin.top - margin.bottom;
+
+    var svg_window = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var svg_name = 'static/js/PolarBarChart.svg';
+    
+    d3.xml(svg_name).mimeType("image/svg+xml").get(function (error, xml)
+    {
+        if (error) throw error;
+        svg_window.node().appendChild(xml.documentElement);
+    });
+
+    //https://www.npmjs.com/package/cheerio
+    //https://stackoverflow.com/questions/47933325/load-and-modify-svg-files-from-node-js
+    //https://observablehq.com/@d3/circle-dragging-i
+    //https://stackoverflow.com/questions/21209549/embed-and-refer-to-an-external-svg-via-d3-and-or-javascript
+</script>
+
+
+</div>
+
+
+
+{%endblock%}

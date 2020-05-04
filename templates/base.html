@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.active_data{
+    border-bottom: 3px solid;
+    border-bottom-color:rgb(236, 0, 0);
+}
+</style>
+
+
+
+<link rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+    crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+    integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+    crossorigin="anonymous"></script>
+<script
+    src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+<script
+    src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+
+<!-- Create Rose -->
+<script
+    src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<!-- Load FileSave.js for saving SVG files -->
+<script src = "{{ url_for('static', filename = 'js/FileSaver.js') }}"></script>
+<!-- Load saveSvgAsPng.js for saving PNG files
+https://github.com/exupero/saveSvgAsPng
+-->
+<script src="{{ url_for('static', filename = 'js/SaveSvgAsPng.js') }}"></script>
+<!-- Load MyLib.js for working with the data -->
+<script src="{{ url_for('static', filename = 'js/MyLib.js') }}"></script>
+<!-- Load createAnswer.js for saving the coorect answer to json object -->
+<script src="{{ url_for('static', filename = 'js/createAnswer.js') }}"></script>
+<!-- Base Menu-->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('index') }}">Radial Vis Experiment</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('adjacentbarchart')}}">Adjacent</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('stackedbarchart')}}">Stacked</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('combinedbarchart')}}">Combined</a>
+            </li>
+            <!-- Exp 2-->
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('overlaidbarchart')}}">Overlaid</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('layeredbarchart')}}">Layered</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{url_for('rosebarchart')}}">Rose</a>
+            </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+
+                <a class="nav-link energy data" href="#" >American Energy</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link humidity data" href="#"> Phoenix Humidity</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link traffic data" href="#">Traffic Flow</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link uber data" href="#">Uber Pickups</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<script>
+    $(document).ready(function ()
+    {
+        $('.data').click(function ()
+        {
+            $('.data').removeClass("active_data");
+            $(this).addClass("active_data");
+        });
+    });
+</script>
+
+
+{%block content%}{%endblock%}

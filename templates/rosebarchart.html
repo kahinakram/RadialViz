@@ -1,0 +1,518 @@
+{%extends 'base.html'%}
+
+{%block content%}
+
+<div class="container-fluid">
+    <br>
+    <div class="row">
+
+        <div class="col-xl-1 col-lg-12 col-md-12 col-sm-12">
+            <button type="button" id="prev" class="btn btn-light"
+                style="font-size:40px;width:100%;height:100%"
+                onclick="prevSet()">Prev</button>
+        </div>
+
+        <div class="col-xl-10 col-lg-12 col-md-12 col-sm-12">
+            <div class="row">
+
+                <div class="col-xl-7 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div id="RoseBarChart"></div>
+                </div>
+
+                <div class="col-xl-5 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="row" style="width:100%;height:100%">
+                        <div class="card" style="width:100%;height:100%">
+                            <div class="card-header">
+                                <h5 class="card-title .card-header "
+                                    style="display:inline;">
+                                    Json output: <p class="Date"
+                                        style="display:inline;">
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form style="border-style: inherit;">
+                                    <div class="form-group">
+                                        <textarea class="form-control textArea"
+                                            id="textArea" rows="30"
+                                            readonly></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-1 col-lg-12 col-md-12 col-sm-12">
+            <button type="button" class="btn btn-light"
+                style="font-size:40px;width:100%;height:100%"
+                onclick="nextSet()">Next</button>
+        </div>
+
+    </div>
+</div>
+
+
+
+<script>
+
+    //Add margins for the svg
+    var margin = { top: 10, right: 10, bottom: 10, left: 10 },
+        //(document.getElementById("PolarBarChart").offsetWidth) 
+        //- margin.right - margin.left, // If you want to center the div
+        width = 850,
+        height = 850;// - margin.bottom;
+
+    //Variable Colors
+    var color_am = '#56C1FF',
+        color_pm = '#FFA72D';
+
+    //Sizing Variables
+    var originX = width / 2,
+        originY = height / 2,
+        coreCircleRadius = 100,
+        outerCircleRadius = 400,
+        innerEdgeCircleRadius = outerCircleRadius - 30,
+        innerCircleRadius = coreCircleRadius + 
+        ((innerEdgeCircleRadius - coreCircleRadius) / 2),
+        barWidth = 0.15 * innerCircleRadius,
+        clockDigits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        barPositionX = originX + ((innerCircleRadius) * Math.sin(0)),
+        barPositionY = originY - ((innerCircleRadius) * Math.cos(0)),
+        maxLength = (innerEdgeCircleRadius - coreCircleRadius);
+
+
+    var am_angles = [];
+    var pm_angles = [];
+
+    //svg window to draw in
+    var svg_window = d3.select("#RoseBarChart")
+        .append("svg")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+    //Create different layers for each part of the clock
+    var circles = svg_window.append('g'),
+        centerLabelLayer = svg_window.append('g'),
+        axisLineLayer = svg_window.append('g'),
+        gridLayer = svg_window.append('g'),
+        barVar1Layer = svg_window.append('g'),
+        barVar2Layer = svg_window.append('g'),
+        clockDigitsLayer = svg_window.append('g');
+
+    var dateLabelLayer = d3.select('.Date').append('g');
+
+    var keys,
+        norm_data,
+        counter = 0;
+
+    drawChartSkeleton()
+
+    /**
+     * Draw chart skeleton
+     * */
+    function drawChartSkeleton()
+    {
+
+        //Just for testing    
+        svg_window.append("rect")
+            .attr("x", -width/2)
+            .attr("y", -height/2)
+            .attr("height", width)
+            .attr("width", height)
+            .style("stroke", 'gray')
+            .style("fill", "none")
+            .style("stroke-width", 0.3)
+
+        dateLabelLayer.append('text')
+            .attr('class', 'dateText')
+            .attr('text-anchor', 'middle')
+            .text('Date')
+            .style('font-weight', 'bold');
+
+        //Outer Circle
+        circles.append("circle")
+            .attr("r", outerCircleRadius + 10)
+            .attr('fill', 'rgba(220,220,220,0.5)')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1);
+        //Inner Edge Circle
+        circles.append("circle")
+            .attr("r", innerEdgeCircleRadius)
+            .attr('fill', 'rgba(255,255,255,1.0)')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        //Inner Grid Circles
+        circles.append("circle")
+            .attr("r", innerCircleRadius)
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        circles.append("circle")
+            .attr("r", coreCircleRadius +
+                ((innerCircleRadius - coreCircleRadius) / 2))
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        circles.append("circle")
+            .attr("r", innerCircleRadius +
+                ((innerEdgeCircleRadius - innerCircleRadius) / 2))
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        //Core Circle
+        circles.append("circle")
+            .attr("r", coreCircleRadius)
+            .attr('fill', 'rgba(255,255,255,1.0)')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 2);
+
+        // Center Label for Variable 1 
+        centerLabelLayer.append("rect")
+            .attr("x", 0 - (0.1 * innerCircleRadius))
+            .attr("y", 0 - (0.1 * innerCircleRadius))
+            .attr("width", (0.1 * innerCircleRadius))
+            .attr('height', (0.1 * innerCircleRadius))
+            .attr('fill', color_am)
+            .style('opacity', 1);
+        centerLabelLayer.append('text')
+            .attr('x', 0 + (0.1 * innerCircleRadius) - 9)
+            .attr('y', 0 - (0.1 * innerCircleRadius/2) +6 )
+            .attr('text-anchor', 'middle')
+            .style('font-weight', 'bold')
+            .text('AM'); // Make this dynamic to the dataset
+
+        // Center Label for Variable 1 
+        centerLabelLayer.append("rect")
+            .attr("x", 0 - (0.1 * innerCircleRadius))
+            .attr("y", 0 + (0.1 * innerCircleRadius/25))
+            .attr("width", 0.1 * innerCircleRadius)
+            .attr('height', 0.1 * innerCircleRadius)
+            .attr('fill', color_pm)
+            .style('opacity', 1);
+
+        centerLabelLayer.append('text')
+            .attr('x', 0 + (0.1 * innerCircleRadius) - 9)
+            .attr('y', 0 + (0.1 * innerCircleRadius)-5)
+            .style('font-weight', 'bold')
+            .attr('text-anchor', 'middle')
+            .text('PM');  // Make this dynamic to the dataset
+        
+        //Add One Axis Line North
+        axisLineLayer.append("line")// attach a line
+            .style("stroke", "black")// colour the line
+            .attr('stroke-width', 2)
+            .attr("x1", 0)// x position of the first end of the line
+            .attr("y1", +coreCircleRadius) // y position of the first end of the line
+            .attr("x2", 0)// x position of the second end of the line
+            .attr("y2", +innerEdgeCircleRadius);
+
+        //Add One Axis Line South
+        axisLineLayer.append("line")// attach a line
+            .style("stroke", "black")// colour the line
+            .attr('stroke-width', 2)
+            .attr("x1", 0)// x position of the first end of the line
+            .attr("y1", -coreCircleRadius) // y position of the first end of the line
+            .attr("x2", 0)// x position of the second end of the line
+            .attr("y2", -innerEdgeCircleRadius);
+
+        for (let index = 0; index < clockDigits.length; index++)
+        {
+
+            var angle_degrees_am = (180 / 12) * (index + 1);
+            var angle_degrees_pm = (180 / 12) * (index + 13);
+            var angle_rad_am = (Math.floor(angle_degrees_am - 90) * (Math.PI / 180));
+            var angle_rad_pm = (Math.floor(angle_degrees_am + 90) * (Math.PI / 180));
+
+            am_angles.push((180 / 12) * index)
+            pm_angles.push((180 / 12) * (index + 12))
+
+            //Add clock digits for AM
+            clockDigitsLayer.append('text')
+                .attr('text-anchor', 'middle')
+                .text(clockDigits[index])
+                .style('font-weight', 'bold')
+                .attr('font-size', '20px')
+                .style('opacity', 0.5)
+                .attr('transform', 'translate(' + Math.cos(angle_rad_am) *
+                    (outerCircleRadius - 15) + ',' + Math.sin(angle_rad_am) *
+                    (outerCircleRadius - 12) + ')');
+
+            //Add clock digits for PM
+            clockDigitsLayer.append('text')
+                .attr('text-anchor', 'middle')
+                .text(clockDigits[index])
+                .style('font-weight', 'bold')
+                .attr('font-size', '20px')
+                .style('opacity', 0.5)
+                .attr('transform', 'translate(' + Math.cos(angle_rad_pm) *
+                    (outerCircleRadius - 15) + ',' + Math.sin(angle_rad_pm) *
+                    (outerCircleRadius - 12) + ')');
+
+            // Polar Grid Coordinates
+            gridLayer.append("line")// attach a line
+                .style("stroke", "gray")// colour the line
+                .attr('stroke-width', 0.5)
+                .style('stroke-dasharray', ('5,5'))
+                .attr("x1", 0)// x position of the first end of the line
+                .attr("y1", -coreCircleRadius) // y position of the first end of the line
+                .attr("x2", 0)// x position of the second end of the line
+                .attr("y2", -innerEdgeCircleRadius)
+                .attr('transform', 'rotate(' + angle_degrees_am + ',' +
+                    0 + ',' + 0 + ')');
+
+            gridLayer.append("line")// attach a line
+                .style("stroke", "gray")// colour the line
+                .attr('stroke-width', 0.5)
+                .style('stroke-dasharray', ('5,5'))
+                .attr("x1", 0)// x position of the first end of the line
+                .attr("y1", -coreCircleRadius) // y position of the first end of the line
+                .attr("x2", 0)// x position of the second end of the line
+                .attr("y2", -innerEdgeCircleRadius)
+                .attr('transform', 'rotate(' + angle_degrees_pm + ',' +
+                    0 + ',' + 0 + ')');
+        }
+    }
+
+
+    /**
+     * Show prev set of data
+     * */
+    var json_to_server;
+
+    function nextSet(){
+        counter = (counter > keys.length - 1) ? keys.length - 1 : counter += 1;
+        json_to_server = createAnswersJson(rawData[keys[counter]], '3_' + img_nr);
+        addText(json_to_server)
+        updateChart()
+    }
+    /**
+     * Show next set of data
+     * */
+    function prevSet(){
+        counter = (counter == 0) ? 0 : counter -= 1;
+        json_to_server = createAnswersJson(rawData[keys[counter]], '3_' + img_nr);
+        addText(json_to_server)
+        updateChart()
+    }
+
+    var energy_active = false;
+    var uber_active = false;
+    var humidity_active = false;
+    var traffic_active = false;
+    var dataset_name = '';
+    var myEnergyButton = ".energy";
+    var myUberButton = ".uber";
+    var myHumidityButton = ".humidity";
+    var myTrafficButton = ".traffic";
+    var rawData;
+    var img_nr = 0;
+
+    $(myEnergyButton).click(function (){
+        uber_active = false;
+        humidity_active = false;
+
+        if (energy_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ energyData | safe}}');
+            var energyDataJson_json = JSON.parse('{{ energyData | safe}}');
+            keys = Object.keys(energyDataJson_json);
+            norm_data = normalizeData(energyDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'energy';
+            updateChart()
+            energy_active = true;
+            img_nr = 1;
+        }
+    });
+
+    $(myHumidityButton).click(function (){
+
+        energy_active = false;
+        uber_active = false;
+
+        if (humidity_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ humidityData | safe}}');
+            var humidityDataJson_json = JSON.parse('{{ humidityData | safe}}');
+            keys = Object.keys(humidityDataJson_json);
+            norm_data = normalizeData(humidityDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'humidity';
+            updateChart()
+            humidity_active = true;
+            img_nr = 1;
+        }
+    });
+
+    $(myTrafficButton).click(function ()
+    {
+
+        energy_active = false;
+        uber_active = false;
+        humidity_active = false;
+
+        if (traffic_active == false)
+        {
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ trafficData | safe}}');
+            var trafficDataJson_json = JSON.parse('{{ trafficData | safe}}');
+            keys = Object.keys(trafficDataJson_json);
+            norm_data = normalizeData(trafficDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'traffic';
+            updateChart()
+            traffic_active = true;
+            img_nr = 16;
+        }
+    });
+
+    $(myUberButton).click(function (){
+        energy_active = false;
+        humidity_active = false;
+
+        if (uber_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ uberData | safe}}');
+            var uberDataJson_json = JSON.parse('{{ uberData | safe}}');
+            keys = Object.keys(uberDataJson_json);
+            norm_data = normalizeData(uberDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'uber';
+            updateChart()
+            uber_active = true;
+            img_nr = 31;
+        }
+    });
+
+
+    /**
+     * http://using-d3js.com/05_07_arcs_pie_charts.html
+     * */
+    function drawArc(data, start_pos, end_pos, color_am, color_pm) {
+        
+        var maxAm = d3.max(d3.values(data.AM));
+        var maxPm = d3.max(d3.values(data.PM));
+        var max_ = Math.max(maxAm,maxPm);
+        console.log(data);
+        
+        //The hours are not aligned!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+        var hours = ['1', '2', '3', '4', '5', '6',
+                    '7', '8', '9', '10', '11', '12',];
+
+        var y = d3.scaleRadial()
+            .range([coreCircleRadius, innerEdgeCircleRadius]) //(innerRadius,outerRadius)
+            .domain([0, max_]); // Domain of Y is from 0 to the max seen in the data
+        
+        //Only am
+        var x_am = d3.scaleBand()
+            .range([start_pos, end_pos]) // start at 0 and move to PI (180 degrees)
+            .domain(data.AM.map(function (d,i) { if(i == 11){return hours[0] } else{return hours[i+1];}})); // The domain of the X axis is the list values.
+        
+            //Am bars
+        barVar1Layer.append("g")
+            .attr("class", "g_am")
+            .selectAll("path")
+            .data(data.AM)
+            .enter()
+            .append("path")
+            .attr("fill", color_am)
+            .attr("class", "am")
+            .attr('id', function (d, i) { if (i == 12) { return 'am_0'; } else { return 'am_' + (i);}})
+            .attr("d", d3.arc()     // imagine your doing a part of a donut plot
+                .innerRadius(coreCircleRadius)
+                .outerRadius(function (d) { return y(d); })
+                .startAngle(function (d,i) { return x_am(hours[i]); })
+                .endAngle(function (d,i) { return x_am(hours[i]) + x_am.bandwidth();})
+                .padAngle(0.02)
+                .padRadius(coreCircleRadius)
+            )
+
+       //Only pm
+        var x_pm = d3.scaleBand()
+            .range([end_pos, end_pos*2]) // start at 0 and move to PI (180 degrees)
+            .domain(data.PM.map(function (d,i) {  if (i == 11) { return hours[0] } else { return hours[i + 1]; } })); // The domain of the X axis is the list values.
+        //PM bars
+        barVar2Layer.append("g")
+            .attr("class", "g_pm")
+            .selectAll("path")
+            .data(data.PM)
+            .enter()
+            .append("path")
+            .attr("fill", color_pm)
+            .attr("class", "pm")
+            .attr('id', function(d,i){ if(i == 12){return 'pm_0';} else{return 'pm_' + (i);}})
+            .attr("d", d3.arc()     // imagine your doing a part of a donut plot
+                .innerRadius(coreCircleRadius)
+                .outerRadius(function (d) { return y(d); })
+                .startAngle(function (d,i) { return x_pm(hours[i]); })
+                .endAngle(function (d,i) { return x_pm(hours[i]) + x_pm.bandwidth();}) 
+                .padAngle(0.02)
+                .padRadius(coreCircleRadius)
+            )
+
+    }
+
+    function deleteArc(params) {
+        //remove old values 
+        d3.selectAll('.g_am').remove()
+        d3.selectAll('.g_pm').remove()
+        d3.selectAll('.dateText').remove()
+        d3.selectAll('.axis_range').remove();
+    }
+
+    /**
+     * Update Chart
+     * */
+    function updateChart(){
+
+        deleteArc()
+
+        var currentDayShown = norm_data[keys[counter]];
+        
+        var maxAm = d3.max(d3.values(currentDayShown.AM));
+        var maxPm = d3.max(d3.values(currentDayShown.PM));
+        var max_ = Math.max(maxAm, maxPm);
+        
+        drawArc(currentDayShown, 0, Math.PI, color_am, color_pm)
+
+        dateLabelLayer.append('text')
+        .attr('class', 'dateText')
+        .attr('text-anchor', 'middle')
+        .text(keys[counter])
+        .style('font-weight', 'bold');
+        
+    }
+
+    $(document).keypress(function (event)
+    {
+        //If P key is pressed
+        if (event.which == 112){  
+
+            //Print SVG file of the div
+            //printSVG('RoseBarChart', '3_' + img_nr)
+            printPNG('RoseBarChart', '3_' + img_nr)
+            img_nr += 1;
+
+            //Upload json to server side for saving as csv 
+            //uploadJsonToServer(json_to_server);
+        }
+
+    });
+
+
+////https://spin.atomicobject.com/2015/06/12/objects-around-svg-circle-d3-js/
+</script>
+
+{%endblock%}
+

@@ -1,0 +1,448 @@
+{%extends 'base.html'%}
+
+{%block content%}
+
+<div class="container-fluid">
+    <br>
+    <div class="row">
+
+        <div class="col-xl-1 col-lg-12 col-md-12 col-sm-12">
+            <button type="button" id="prev" class="btn btn-light"
+                style="font-size:40px;width:100%;height:100%"
+                onclick="prevSet()">Prev</button>
+        </div>
+
+        <div class="col-xl-10 col-lg-12 col-md-12 col-sm-12">
+            <div class="row">
+
+                <div class="col-xl-7 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div id="AdjacentBarChart"></div>
+                </div>
+
+                <div class="col-xl-5 col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                    <div class="row" style="width:100%;height:100%">
+                        <div class="card" style="width:100%;height:100%">
+                            <div class="card-header">
+                                <h5 class="card-title .card-header "
+                                    style="display:inline;">
+                                    Json output: <p class="Date"
+                                        style="display:inline;">
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form style="border-style: inherit;">
+                                    <div class="form-group">
+                                        <textarea class="form-control textArea"
+                                            id="textArea" rows="30"
+                                            readonly></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-1 col-lg-12 col-md-12 col-sm-12">
+            <button type="button" class="btn btn-light"
+                style="font-size:40px;width:100%;height:100%"
+                onclick="nextSet()">Next</button>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+
+    //Add margins for the svg
+    var margin = { top: 10, right: 10, bottom: 10, left: 10 },
+        //(document.getElementById("AdjacentBarChart").offsetWidth) 
+        //- margin.right - margin.left, // If you want to center the div
+        width = 850,
+        height = 850;// - margin.bottom;
+    
+    //Variable Colors
+    var color_am = '#56C1FF',
+        color_pm = '#FFA72D';
+
+    //Sizing Variables
+    var originX = width / 2,
+        originY = height / 2,
+        coreCircleRadius = 100,
+        outerCircleRadius = 400,
+        innerEdgeCircleRadius = outerCircleRadius - 30,
+        innerCircleRadius = coreCircleRadius + 
+        ((innerEdgeCircleRadius - coreCircleRadius) / 2),
+        barWidth = 0.1 * innerCircleRadius,
+        clockDigits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        barPositionX = originX + ((innerCircleRadius) * Math.sin(0)),
+        barPositionY = originY - ((innerCircleRadius) * Math.cos(0)),
+        maxLength = innerEdgeCircleRadius - coreCircleRadius;
+
+    var angle_degrees = [];
+
+    //svg window to draw in
+    var svg_window = d3.select("#AdjacentBarChart")
+        .append("svg")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+    //Create different layers for each part of the clock
+    var circles = svg_window.append('g'),
+        centerLabelLayer = svg_window.append('g'),
+        axisLineLayer = svg_window.append('g'),
+        gridLayer = svg_window.append('g'),
+        barVar1Layer = svg_window.append('g'),
+        barVar2Layer = svg_window.append('g'),
+        clockDigitsLayer = svg_window.append('g');
+
+    var dateLabelLayer = d3.select('.Date').append('g');
+
+    var keys,
+        norm_data,  
+        counter = 0;
+
+    drawChartSkeleton()
+
+    /**
+     * Draw chart skeleton
+     * */
+    function drawChartSkeleton() {
+
+        //Just for testing    
+        var borderPath = svg_window.append("rect")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("height", height)
+            .attr("width", width)
+            .style("stroke", 'gray')
+            .style("fill", "none")
+            .style("stroke-width", 0.3);
+        
+        dateLabelLayer.append('text')
+            .attr('class', 'dateText')
+            .attr('text-anchor', 'middle')
+            .text('Date')
+            .style('font-weight', 'bold');
+
+        //Outer Circle
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", outerCircleRadius + 10)
+            .attr('fill', 'rgba(220,220,220,0.5)')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 1);
+        //Inner Edge Circle
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", innerEdgeCircleRadius)
+            .attr('fill', 'rgba(255,255,255,1.0)')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+        
+        //Inner Grid Circles
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", innerCircleRadius)
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", coreCircleRadius+
+            ((innerCircleRadius-coreCircleRadius)/2))
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", innerCircleRadius + 
+            ((innerEdgeCircleRadius - innerCircleRadius) / 2))
+            .attr('fill', 'none')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 0.5);
+
+        //Core Circle
+        circles.append("circle")
+            .attr("cx", originX)
+            .attr("cy", originY)
+            .attr("r", coreCircleRadius)
+            .attr('fill', 'rgba(255,255,255,1.0)')
+            .attr('stroke', 'gray')
+            .attr('stroke-width', 1);
+        // Center Label for Variable 1 
+        centerLabelLayer.append("rect")
+            .attr("x", originX - barWidth)
+            .attr("y", originY - barWidth - 0.5)
+            .attr("width", barWidth)
+            .attr('height', barWidth)
+            .attr('fill', color_am)
+            .style('opacity', 1);
+        centerLabelLayer.append('text')
+            .attr('x', originX + (barWidth / 2) + 3)
+            .attr('y', originY - (barWidth / 2) + 6)
+            .attr('text-anchor', 'middle')
+            .style('font-weight', 'bold')
+            .text('AM'); // Make this dynamic to the dataset
+        
+        // Center Label for Variable 1 
+        centerLabelLayer.append("rect")
+            .attr("x", originX - barWidth)
+            .attr("y", originY + 0.5)
+            .attr("width", barWidth)
+            .attr('height', barWidth)
+            .attr('fill', color_pm)
+            .style('opacity', 1);
+        centerLabelLayer.append('text')
+            .attr('x', originX + (barWidth / 2) + 3)
+            .attr('y', originY + (barWidth / 2) + 6)
+            .style('font-weight', 'bold')
+            .attr('text-anchor', 'middle')
+            .text('PM');  // Make this dynamic to the dataset
+
+        //Add One Axis Line 
+        axisLineLayer.append("line")// attach a line
+            .style("stroke", "black")// colour the line
+            .attr('stroke-width', 2)
+            .attr("x1", originX)// x position of the first end of the line
+            .attr("y1", originY - coreCircleRadius) // y position of the first end of the line
+            .attr("x2", originX)// x position of the second end of the line
+            .attr("y2", originY - innerEdgeCircleRadius);
+
+        for (let index = 0; index < clockDigits.length; index++) {
+            //Add clock digits 
+            var angle = (360 / 12) * (index);
+            angle_degrees.push(angle)
+            var angle_rad = (angle - 60) * (Math.PI / 180); 
+            clockDigitsLayer.append('text')
+                .attr('x', originX)
+                .attr('y', originY)
+                .attr('text-anchor', 'middle')
+                .text(clockDigits[index])
+                .style('font-weight', 'bold')
+                .attr('font-size', '20px')
+                .style('opacity', 0.5)
+                .attr('transform', 'translate(' + Math.cos(angle_rad) *
+                    (innerEdgeCircleRadius + 18) + ',' + Math.sin(angle_rad) *
+                    (innerEdgeCircleRadius + 18) + ')');  
+            
+            // Polar Grid Coordinates
+            gridLayer.append("line")// attach a line
+                .style("stroke", "gray")// colour the line
+                .attr('stroke-width', 0.5)
+                .style('stroke-dasharray', ('5,5'))
+                .attr("x1", originX)// x position of the first end of the line
+                .attr("y1", originY + coreCircleRadius)// y position of the first end of the line
+                .attr("x2", originX)// x position of the second end of the line
+                .attr("y2", originY + innerEdgeCircleRadius)
+                .attr('transform', 'rotate(' + angle + ',' +
+                    width / 2 + ',' + height / 2 + ')');
+        }    
+    }
+
+    /**
+     * Show prev set of data
+     * */
+
+    var json_to_server;
+
+    function nextSet(){
+        counter = (counter > keys.length - 1) ? keys.length - 1 : counter += 1;
+        
+        json_to_server = createAnswersJson(rawData[keys[counter]], '1_' + img_nr);
+        addText(json_to_server)
+        updateChart()
+    }
+    /**
+     * Show next set of data
+     * */
+    function prevSet(){
+        counter = (counter == 0) ? 0 : counter -= 1;
+        
+        json_to_server = createAnswersJson(rawData[keys[counter]], '1_' + img_nr);
+        addText(json_to_server)
+        updateChart()
+    }
+
+    var energy_active = false;
+    var uber_active = false;
+    var humidity_active = false;
+    var traffic_active = false;
+    var dataset_name = '';
+    var myEnergyButton = ".energy";
+    var myUberButton = ".uber";
+    var myHumidityButton = ".humidity";
+    var myTrafficButton = ".traffic";
+    var rawData;
+    var img_nr = 0;
+           
+    $(myEnergyButton).click(function (){
+        
+        uber_active = false;
+        humidity_active = false;
+        traffic_active = false;
+
+        if (energy_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ energyData | safe}}');
+            var energyDataJson_json = JSON.parse('{{ energyData | safe}}');
+            keys = Object.keys(energyDataJson_json);
+            norm_data = normalizeData(energyDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'energy';
+            updateChart()
+            energy_active = true;
+            img_nr = 1;
+        }
+    });
+
+    $(myHumidityButton).click(function (){
+
+        energy_active = false;
+        uber_active = false;
+        traffic_active = false;
+
+        if (humidity_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ humidityData | safe}}');
+            var humidityDataJson_json = JSON.parse('{{ humidityData | safe}}');
+            keys = Object.keys(humidityDataJson_json);
+            norm_data = normalizeData(humidityDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'humidity';
+            updateChart()
+            humidity_active = true;
+            img_nr = 1;
+        }
+    });
+
+    $(myTrafficButton).click(function ()
+    {
+
+        energy_active = false;
+        uber_active = false;
+        humidity_active = false;
+
+        if (traffic_active == false)
+        {
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ trafficData | safe}}');
+            var trafficDataJson_json = JSON.parse('{{ trafficData | safe}}');
+            keys = Object.keys(trafficDataJson_json);
+            norm_data = normalizeData(trafficDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'traffic';
+            updateChart()
+            traffic_active = true;
+            img_nr = 16;
+        }
+    });
+
+    $(myUberButton).click(function (){
+        
+        energy_active = false;
+        humidity_active = false;
+        traffic_active = false;
+        
+        if (uber_active == false){
+            //Get dataJson and normalize the json object
+            rawData = JSON.parse('{{ uberData | safe}}');
+            var uberDataJson_json = JSON.parse('{{ uberData | safe}}');
+            keys = Object.keys(uberDataJson_json);
+            norm_data = normalizeData(uberDataJson_json, keys, maxLength);
+            counter = 0;
+            dataset_name = 'uber';
+            updateChart()
+            uber_active = true;
+            img_nr = 31;
+        }
+    });
+
+    /**
+     * Update Chart
+     * */
+    function updateChart(){
+        
+        //remove old values 
+        d3.selectAll('.am').remove()
+        d3.selectAll('.pm').remove()
+        d3.selectAll('.dateText').remove()
+        d3.selectAll('.axis_range').remove();
+        
+        var currentDayShown = norm_data[keys[counter]];    
+        
+        dateLabelLayer.append('text')
+            .attr('class', 'dateText')
+            .attr('text-anchor', 'middle')
+            .text(keys[counter])
+            .style('font-weight', 'bold');
+
+        //Bars for AM
+        currentDayShown.AM.forEach(function(index_value,i) {
+            
+            barVar1Layer.append("rect")
+                .attr('class','am')
+                .attr('id', 'am_' + i)
+                .attr("x", barPositionX - (barWidth * 1.05))
+                .attr("y", function (d) { 
+                    return (originY - coreCircleRadius) - index_value; 
+                })
+                .attr("width", barWidth)
+                .attr('height', function (d) { return index_value; })
+                .attr('fill', color_am)
+                .style('opacity', 1)
+                .attr('transform', 'rotate(' + angle_degrees[i] + ',' +
+                    width / 2 + ',' + height / 2 + ')');
+        });
+
+        //Bars for PM
+        currentDayShown.PM.forEach(function (index_value, i){
+            
+            barVar1Layer.append("rect")
+                .attr('class', 'pm')
+                .attr('id', 'pm_' + i)
+                .attr("x", barPositionX + 1.05)
+                .attr("y", function (d) { 
+                    return (originY - coreCircleRadius) - index_value; 
+                })
+                .attr("width", barWidth)
+                .attr('height', function (d) { return index_value; })
+                .attr('fill', color_pm)
+                .style('opacity', 1)
+                .attr('transform', 'rotate(' + angle_degrees[i] + ',' +
+                    width / 2 + ',' + height / 2 + ')');
+        });
+
+    }        
+    
+    $(document).keypress(function (event){
+        //If P key is pressed
+        if (event.which == 112){
+            
+            //Print SVG file of the div
+            //printSVG('AdjacentBarChart', '1_'+img_nr)
+            printPNG('AdjacentBarChart', '1_' + img_nr)
+            img_nr += 1;
+            
+            //Upload json to server side for saving as csv 
+            //uploadJsonToServer(json_to_server);
+        }
+
+    });
+
+    //https://spin.atomicobject.com/2015/06/12/objects-around-svg-circle-d3-js/
+</script>
+
+{%endblock%}
+
